@@ -24,4 +24,4 @@ Umbra will attempt to install these automatically via `apt` upon its first execu
 2. Grant execution permissions to the script:
 
 ```bash
-chmod +x Umbra
+chmod +x Scanumbra
