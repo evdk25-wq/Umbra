@@ -4,7 +4,6 @@
 
 readonly REQUIRED_COMMANDS=("exiftool" "steghide" "magick" "openssl")
 
-# Association des commandes avec leurs paquets Debian correspondants
 get_package_name() {
     local cmd="$1"
     case "$cmd" in
@@ -25,22 +24,21 @@ check_and_install_dependencies() {
     done
 
     if [[ ${#missing_pkgs[@]} -gt 0 ]]; then
-        echo "Certains outils requis sont manquants : ${missing_pkgs[*]}"
-        read -r -p "Voulez-vous les installer maintenant ? (y/N) : " response
+        echo "Required tools are missing: ${missing_pkgs[*]}"
+        read -r -p "Do you want to install them now? (y/N): " response
         if [[ "$response" =~ ^[Yy]$ ]]; then
-            echo "Mise à jour des dépôts et installation des paquets..."
+            echo "Updating repositories and installing packages..."
             sudo apt update && sudo apt install -y "${missing_pkgs[@]}"
             
-            # Vérification après tentative d'installation
             for cmd in "${REQUIRED_COMMANDS[@]}"; do
                 if ! command -v "$cmd" &> /dev/null; then
-                    echo "Erreur : L'installation de $cmd a échoué." >&2
+                    echo "Error: Installation of $cmd failed." >&2
                     exit 1
                 fi
             done
-            echo "Tous les outils ont été installés avec succès !"
+            echo "All tools installed successfully!"
         else
-            echo "Erreur : Impossible de continuer sans les outils requis." >&2
+            echo "Error: Cannot continue without required tools." >&2
             exit 1
         fi
     fi
@@ -49,67 +47,67 @@ check_and_install_dependencies() {
 validate_file_exists() {
     local file="$1"
     if [[ ! -f "$file" ]]; then
-        echo "Erreur : Le fichier '$file' n'existe pas." >&2
+        echo "Error: File '$file' does not exist." >&2
         return 1
     fi
     return 0
 }
 
 display_metadata() {
-    read -r -p "Entrez le chemin du fichier : " filepath
+    read -r -p "Enter file path: " filepath
     validate_file_exists "$filepath" || return
     exiftool "$filepath"
 }
 
 embed_hidden_data() {
-    read -r -p "Entrez l'image conteneur : " image
+    read -r -p "Enter cover image file: " image
     validate_file_exists "$image" || return
     
-    read -r -p "Entrez le fichier à cacher : " data
+    read -r -p "Enter file to hide: " data
     validate_file_exists "$data" || return
     
-    read -r -s -p "Entrez la clé secrète : " passphrase
+    read -r -s -p "Enter secret passphrase: " passphrase
     echo
     
     steghide embed -cf "$image" -ef "$data" -p "$passphrase"
-    echo "Intégration réussie."
+    echo "Data successfully embedded!"
 }
 
 extract_hidden_data() {
-    read -r -p "Entrez l'image conteneur : " image
+    read -r -p "Enter stego image file: " image
     validate_file_exists "$image" || return
     
-    read -r -s -p "Entrez la clé secrète : " passphrase
+    read -r -s -p "Enter secret passphrase: " passphrase
     echo
     
     steghide extract -sf "$image" -p "$passphrase"
 }
 
 convert_image() {
-    read -r -p "Entrez le fichier JPEG à convertir : " jpeg
+    read -r -p "Enter JPEG file to convert: " jpeg
     validate_file_exists "$jpeg" || return
     
-    read -r -p "Entrez le nom du fichier PNG de sortie : " png
+    read -r -p "Enter output PNG file name: " png
     magick "$jpeg" "$png"
-    echo "Conversion terminée : $png"
+    echo "Conversion completed: $png"
 }
 
 encrypt_file() {
-    read -r -p "Entrez le fichier à chiffrer : " file
+    read -r -p "Enter file to encrypt: " file
     validate_file_exists "$file" || return
     
-    read -r -p "Entrez le nom du fichier chiffré de sortie : " output
+    read -r -p "Enter output encrypted file name: " output
     openssl enc -aes-256-cbc -salt -pbkdf2 -in "$file" -out "$output"
-    echo "Fichier chiffré avec succès : $output"
+    echo "File successfully encrypted: $output"
 }
 
 decrypt_file() {
-    read -r -p "Entrez le fichier chiffré : " file
+    read -r -p "Enter encrypted file: " file
     validate_file_exists "$file" || return
     
-    read -r -p "Entrez le nom du fichier déchiffré de sortie : " output
+    read -r -p "Enter output decrypted file name: " output
     openssl enc -aes-256-cbc -d -pbkdf2 -in "$file" -out "$output"
-    echo "Fichier déchiffré avec succès : $output"
+    echo "File successfully decrypted: $output"
 }
 
 display_menu() {
@@ -134,7 +132,7 @@ main() {
     display_menu
 
     while true; do
-        read -r -p "Choisissez une option (1-7) : " option
+        read -r -p "Choose an option (1-7): " option
 
         case $option in
             1) display_metadata ;;
@@ -144,11 +142,11 @@ main() {
             5) encrypt_file ;;
             6) decrypt_file ;;
             7)
-                echo "Au revoir !"
+                echo "Goodbye!"
                 break
                 ;;
             *)
-                echo "Option invalide. Veuillez réessayer." >&2
+                echo "Invalid option. Please try again." >&2
                 ;;
         esac
     done
