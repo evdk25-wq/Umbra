@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Scanumbra.png" alt="Scanumbra Logo" width="1020">
+  <img src="Scanumbra.png" alt="Scanumbra Logo" width="900">
 </p>
 
 
